@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GestionProductos.BLL/GestionProductos.BLL.csproj" />
+  <Project Path="GestionProductos.DAL/GestionProductos.DAL.csproj" />
+  <Project Path="GestionProductos.Entidades/GestionProductos.Entidades.csproj" />
+  <Project Path="GestionProductos.Web/GestionProductos.Web.csproj" />
+</Solution>
