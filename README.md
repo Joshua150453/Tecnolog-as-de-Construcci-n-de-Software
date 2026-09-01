@@ -144,6 +144,72 @@ Abra su navegador e ingrese a la URL mostrada en la consola (ej. `http://localho
 
 ---
 
+# Funciones Stateful y Stateless en Arquitectura N-Capas
+ 
+## 1. Resumen
+ 
+El objetivo de esta implementación fue evolucionar el sistema de gestión de productos hacia un modelo multicapa robusto en C# .NET, integrando y clasificando funciones **Stateful** y **Stateless** en la capa de negocio (BLL). Esta división permite optimizar el rendimiento, garantizar la integridad de los datos y estructurar el sistema siguiendo los principios SOLID y patrones de diseño modernos.
+ 
+## 2. Estructura de la Arquitectura (N-Layer)
+ 
+El proyecto se dividió en cuatro capas con responsabilidades delimitadas:
+ 
+| Capa | Responsabilidad |
+|---|---|
+| **GestionProductos.Entidades** | Define los modelos de datos (`Producto.cs`). |
+| **GestionProductos.DAL** (Capa de Acceso a Datos) | Maneja las consultas directas a SQL Server mediante ADO.NET. |
+| **GestionProductos.BLL** (Capa de Lógica de Negocio) | Aloja las 4 funciones objeto de prueba (Stateful y Stateless). |
+| **GestionProductos.Web** (Capa de Presentación) | Controlador (`ProductoController.cs`) y vistas que capturan solicitudes y retornan datos al cliente. |
+ 
+## 3. Clasificación de Funciones Implementadas
+ 
+### A. Funciones Stateful (Con Estado)
+ 
+Son aquellas que modifican o leen un estado que persiste a lo largo del tiempo. Tienen efectos secundarios sobre el sistema.
+ 
+#### `ModificarStockStateful` (Persistencia Permanente en Disco)
+ 
+- **Ubicación:** `ProductoBLL.cs`
+- **Mecanismo:** Ejecuta sentencias SQL `UPDATE` hacia la base de datos SQL Server mediante la capa DAL.
+- **Comportamiento:** Si la aplicación se apaga o reinicia, la información **permanece guardada** en la BD de forma indefinida.
+![Ajuste de stock permanente en SQL Server](./images/stateful-stock.png)
+ 
+#### `AgregarAlCarritoStateful` (Persistencia Temporal en Memoria RAM)
+ 
+- **Ubicación:** `ProductoBLL.cs` / `ProductoController.cs`
+- **Mecanismo:** Almacena objetos en la sesión del usuario (`HttpContext.Session`) utilizando cookies identificadoras (`.AspNetCore.Session`).
+- **Comportamiento:** El estado se mantiene activo mientras el navegador y la aplicación estén corriendo. Si el servidor se apaga (`dotnet run`), la memoria RAM se limpia y la sesión se vacía.
+![Agregar al carrito en sesión HTTP](./images/stateful-carrito.png)
+ 
+### B. Funciones Stateless (Sin Estado / Apátridas)
+ 
+Son funciones puras. No modifican variables globales, no escriben en la base de datos ni leen/escriben en la sesión HTTP. Mismo *input* siempre genera exactamente el mismo *output*.
+ 
+#### `CalcularPrecioConDescuentoStateless` (Cálculo Puro)
+ 
+- **Ubicación:** `ProductoBLL.cs`
+- **Mecanismo:** Recibe variables numéricas (`precio` y `porcentajeDescuento`) y calcula el valor en RAM mediante una fórmula matemática.
+- **Comportamiento:** Devuelve el precio simulado en tiempo de ejecución sin alterar el precio original almacenado en SQL Server.
+#### `EvaluarNivelStockStateless` (Evaluación de Reglas de Negocio)
+ 
+- **Ubicación:** `ProductoBLL.cs`
+- **Mecanismo:** Analiza un valor numérico (`stock`) a través de estructuras condicionales para categorizar el inventario (*Agotado*, *Bajo*, *Moderado*, *Óptimo*).
+- **Comportamiento:** Realiza una lectura reactiva sin afectar ni consultar estados externos.
+![Evaluación de nivel de stock](./images/stateless-nivel-stock.png)
+ 
+## 4. Enlaces de Prueba HTTP (URLs del Sistema)
+ 
+Para la verificación funcional del sistema desplegado localmente en `http://localhost:5231`, se utilizan las siguientes rutas:
+ 
+- **Página Principal (Listado general):**
+  `http://localhost:5231/Producto`
+- **Prueba Stateful 1 (Ajuste de Stock permanente en SQL Server):**
+  `http://localhost:5231/Producto/AjustarStock?id=1&ajuste=5`
+- **Prueba Stateful 2 (Agregar al Carrito en Sesión HTTP):**
+  `http://localhost:5231/Producto/AgregarCarrito?id=1`
+- **Prueba Stateless 1 y 2 (Cálculo de descuento y estado de stock en tiempo real):**
+  `http://localhost:5231/Producto/CalcularPromocion?id=1`
+  
 ## 👤 Autor
 
 **Joshua David Ortiz Rosas** - [Joshua150453](https://github.com/Joshua150453)
