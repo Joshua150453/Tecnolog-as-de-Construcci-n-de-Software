@@ -209,7 +209,59 @@ Para la verificación funcional del sistema desplegado localmente en `http://loc
   `http://localhost:5231/Producto/AgregarCarrito?id=1`
 - **Prueba Stateless 1 y 2 (Cálculo de descuento y estado de stock en tiempo real):**
   `http://localhost:5231/Producto/CalcularPromocion?id=1`
-  
+
+# GestionProductos — Internacionalización (i18n) y Estabilización del Proyecto
+
+## 1. Resumen Ejecutivo
+
+Se completó con éxito la implementación de **Internacionalización (i18n)** en la capa web de la aplicación ASP.NET Core (`GestionProductos.Web`). Asimismo, se resolvieron y sanearon los conflictos de integración en el control de versiones (Git/GitHub), logrando una solución estable, funcional y sincronizada que respeta la arquitectura multicapa y las funcionalidades *stateful* y *stateless* existentes.
+
+## 2. Acciones Realizadas
+
+### A. Configuración de Internacionalización (i18n)
+
+**Middlewares y Servicios en `Program.cs`:**
+- Se registraron los servicios de localización mediante `.AddViewLocalization()` y `.AddDataAnnotationsLocalization()`.
+- Se configuró la ruta raíz de recursos (`Resources`) y se integró `RequestLocalizationMiddleware`.
+
+**Creación de Archivos de Recursos (`.resx`):**
+- Se crearon los archivos de diccionarios en la estructura correspondiente:
+  - `GestionProductos.Web/Resources/Views/Producto/Index.es.resx` (Español)
+  - `GestionProductos.Web/Resources/Views/Producto/Index.en.resx` (Inglés)
+
+**Selector de Idioma e Interfaz de Usuario:**
+- En `_Layout.cshtml`, se integró un selector de idiomas desplegable (*dropdown*) que invoca la acción del controlador.
+- En `ProductoController.cs`, se implementó la acción `CambiarIdioma`, la cual persiste la cultura seleccionada (`en` / `es`) mediante la cookie estándar `CookieRequestCultureProvider`.
+
+### B. Resolución de Conflictos y Control de Versiones
+
+**Sincronización con GitHub:**
+- Durante el proceso de integración (`git pull` / `git push`), se generaron conflictos de fusión (*merge conflicts*) en los siguientes archivos:
+  - `GestionProductos.BLL/ProductoBLL.cs`
+  - `GestionProductos.Web/Controllers/ProductoController.cs`
+  - `GestionProductos.Web/Program.cs`
+
+**Saneamiento del Código:**
+- Se eliminaron manualmente todos los marcadores residuales de conflicto de Git (`<<<<<<<`, `=======`, `>>>>>>>`) que provocaban los errores de compilación **CS8300**.
+- Se preservó intacta la lógica de negocio previa:
+  - Persistencia en base de datos SQL Server.
+  - Gestión del carrito basado en sesión HTTP.
+  - Utilidades *stateless* para cálculo de descuentos y evaluación de stock.
+
+**Commit y Sincronización Remota:**
+- Se realizó la confirmación de cambios (*commit*) y el envío (*push*) exitoso a la rama `main` del repositorio de GitHub: `Joshua150453/Tecnolog-as-de-Construcci-n-de-Software`.
+
+## 3. Estado Actual de la Aplicación
+
+| Componente / Característica       | Estado | Observaciones                                                              |
+|------------------------------------|:------:|-----------------------------------------------------------------------------|
+| Compilación (.NET)                 | ✅ OK  | Ejecución limpia sin errores a través de `dotnet run`.                     |
+| Internacionalización (i18n)        | ✅ OK  | Alternancia fluida entre Español e Inglés mediante cookies de sesión.      |
+| Arquitectura N-Capas                | ✅ OK  | Entidades, DAL, BLL y Web operando de forma desacoplada.                   |
+| Funciones Stateful / Stateless      | ✅ OK  | Gestión de inventario, carrito de compras y reglas sin estado funcionando. |
+| Repositorio GitHub                  | ✅ OK  | Código local sincronizado con el repositorio remoto.                      |
+
+
 ## 👤 Autor
 
 **Joshua David Ortiz Rosas** - [Joshua150453](https://github.com/Joshua150453)
