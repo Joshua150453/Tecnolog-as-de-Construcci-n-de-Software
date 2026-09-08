@@ -81,6 +81,7 @@ namespace GestionProductos.Web.Controllers
         }
 
         // =======================================================
+<<<<<<< HEAD
         // ACCIÓN PARA INTERNACIONALIZACIÓN (i18n)
         // =======================================================
 
@@ -98,6 +99,8 @@ namespace GestionProductos.Web.Controllers
         }
 
         // =======================================================
+=======
+>>>>>>> ded4807506059883eae67f08118827bedf494bb5
         // ACCIONES HABILITADAS PARA PRUEBAS GET
         // =======================================================
 
