@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Localization;
 using GestionProductos.BLL;
 using GestionProductos.Entidades;
+using System.Text.Json;
 
 namespace GestionProductos.Web.Controllers
 {
@@ -76,6 +78,74 @@ namespace GestionProductos.Web.Controllers
         {
             _productoBLL.Eliminar(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        // =======================================================
+        // ACCIÓN PARA INTERNACIONALIZACIÓN (i18n)
+        // =======================================================
+
+        // GET: /Producto/CambiarIdioma?culture=en&returnUrl=/Producto
+        [HttpGet]
+        public IActionResult CambiarIdioma(string culture, string returnUrl)
+        {
+            Response.Cookies.Append(
+                CookieRequestCultureProvider.DefaultCookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+            );
+
+            return LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/Producto" : returnUrl);
+        }
+
+        // =======================================================
+        // ACCIONES HABILITADAS PARA PRUEBAS GET
+        // =======================================================
+
+        // GET: /Producto/AjustarStock?id=1&ajuste=5 (Stateful 1)
+        [HttpGet]
+        public IActionResult AjustarStock(int id, int ajuste)
+        {
+            try
+            {
+                _productoBLL.ModificarStockStateful(id, ajuste);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: /Producto/AgregarCarrito?id=1 (Stateful 2)
+        [HttpGet]
+        public IActionResult AgregarCarrito(int id)
+        {
+            var sessionData = HttpContext.Session.GetString("Carrito");
+            var carrito = string.IsNullOrEmpty(sessionData)
+                ? new List<Producto>()
+                : JsonSerializer.Deserialize<List<Producto>>(sessionData) ?? new List<Producto>();
+
+            carrito = _productoBLL.AgregarAlCarritoStateful(carrito, id);
+
+            HttpContext.Session.SetString("Carrito", JsonSerializer.Serialize(carrito));
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: /Producto/CalcularPromocion?id=1 (Stateless 1 y 2)
+        [HttpGet]
+        public IActionResult CalcularPromocion(int id)
+        {
+            var producto = _productoBLL.ObtenerPorId(id);
+            if (producto == null) return NotFound($"Producto con ID {id} no encontrado.");
+
+            decimal precioOferta = _productoBLL.CalcularPrecioConDescuentoStateless(producto.Precio, 15);
+            string estatusStock = _productoBLL.EvaluarNivelStockStateless(producto.Stock);
+
+            return Content($"PRODUCTO: {producto.Nombre}\n" +
+                           $"PRECIO ORIGINAL: S/ {producto.Precio}\n" +
+                           $"PRECIO 15% DESC (Stateless 1): S/ {precioOferta}\n" +
+                           $"STOCK ACTUAL: {producto.Stock}\n" +
+                           $"EVALUACION STOCK (Stateless 2): {estatusStock}");
         }
     }
 }
