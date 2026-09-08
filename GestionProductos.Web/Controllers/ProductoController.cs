@@ -80,11 +80,6 @@ namespace GestionProductos.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // =======================================================
-<<<<<<< HEAD
-        // ACCIÓN PARA INTERNACIONALIZACIÓN (i18n)
-        // =======================================================
-
         // GET: /Producto/CambiarIdioma?culture=en&returnUrl=/Producto
         [HttpGet]
         public IActionResult CambiarIdioma(string culture, string returnUrl)
@@ -97,12 +92,6 @@ namespace GestionProductos.Web.Controllers
 
             return LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/Producto" : returnUrl);
         }
-
-        // =======================================================
-=======
->>>>>>> ded4807506059883eae67f08118827bedf494bb5
-        // ACCIONES HABILITADAS PARA PRUEBAS GET
-        // =======================================================
 
         // GET: /Producto/AjustarStock?id=1&ajuste=5 (Stateful 1)
         [HttpGet]

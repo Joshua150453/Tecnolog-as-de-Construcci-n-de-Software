@@ -68,11 +68,7 @@ namespace GestionProductos.BLL
         }
 
         // =======================================================
-<<<<<<< HEAD
         // 🔹 FUNCIONES STATEFUL (Con estado)
-=======
-        // FUNCIONES STATEFUL (Con estado)
->>>>>>> ded4807506059883eae67f08118827bedf494bb5
         // =======================================================
 
         /// <summary>
@@ -104,11 +100,7 @@ namespace GestionProductos.BLL
         }
 
         // =======================================================
-<<<<<<< HEAD
         // 🔹 FUNCIONES STATELESS (Sin estado)
-=======
-        // FUNCIONES STATELESS (Sin estado)
->>>>>>> ded4807506059883eae67f08118827bedf494bb5
         // =======================================================
 
         /// <summary>
