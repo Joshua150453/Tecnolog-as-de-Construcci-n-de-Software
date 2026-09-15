@@ -34,6 +34,12 @@ namespace GestionProductos.Web.Controllers
         [HttpPost]
         public IActionResult Crear(Producto producto)
         {
+            // 🔹 Evalúa las validaciones del modelo ([RegularExpression], [Required], etc.)
+            if (!ModelState.IsValid)
+            {
+                return View(producto);
+            }
+
             try
             {
                 _productoBLL.Insertar(producto);
@@ -61,6 +67,12 @@ namespace GestionProductos.Web.Controllers
         [HttpPost]
         public IActionResult Editar(Producto producto)
         {
+            // 🔹 Evalúa las validaciones del modelo ([RegularExpression], [Required], etc.)
+            if (!ModelState.IsValid)
+            {
+                return View(producto);
+            }
+
             try
             {
                 _productoBLL.Actualizar(producto);
