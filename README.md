@@ -248,6 +248,39 @@ Se completó con éxito la implementación de **Internacionalización (i18n)** e
   - Gestión del carrito basado en sesión HTTP.
   - Utilidades *stateless* para cálculo de descuentos y evaluación de stock.
 
+# Validación de Datos con Expresiones Regulares (Regex)
+
+## 1. Objetivo
+
+Completar la validación de datos en formularios mediante Expresiones Regulares (Regex) para garantizar la integridad de la información procesada en el módulo de gestión de productos.
+
+## 2. Modificaciones Realizadas
+
+### Capa de Entidades (`Producto.cs`)
+
+- Se aplicó la anotación `[RegularExpression]` al atributo `Nombre` para restringir la entrada a letras (incluyendo tildes y eñes), números y espacios, con una extensión de 3 a 50 caracteres:
+
+  ```
+  ^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]{3,50}$
+  ```
+
+- Se añadió `[RegularExpression]` al atributo `Precio` para asegurar un formato numérico decimal válido (hasta 2 decimales):
+
+  ```
+  ^\d+(\.\d{1,2})?$
+  ```
+
+- Se agregaron atributos `[Required]` y `[Range]` para controlar campos obligatorios y rangos numéricos.
+
+### Capa Web - Controlador (`ProductoController.cs`)
+
+- Se integró la comprobación `if (!ModelState.IsValid)` en las acciones HTTP POST `Crear` y `Editar`.
+- Esto fuerza la evaluación de los atributos Data Annotations antes de enviar los datos a la capa de negocio (BLL).
+
+### Capa Web - Vistas (`Crear.cshtml` y `Editar.cshtml`)
+
+- Se agregaron las etiquetas de renderizado `<span asp-validation-for="...">` debajo de cada campo del formulario, para desplegar los mensajes de error dinámicos cuando el patrón Regex no sea respetado.
+  
 **Commit y Sincronización Remota:**
 - Se realizó la confirmación de cambios (*commit*) y el envío (*push*) exitoso a la rama `main` del repositorio de GitHub: `Joshua150453/Tecnolog-as-de-Construcci-n-de-Software`.
 
@@ -259,8 +292,8 @@ Se completó con éxito la implementación de **Internacionalización (i18n)** e
 | Internacionalización (i18n)        | ✅ OK  | Alternancia fluida entre Español e Inglés mediante cookies de sesión.      |
 | Arquitectura N-Capas                | ✅ OK  | Entidades, DAL, BLL y Web operando de forma desacoplada.                   |
 | Funciones Stateful / Stateless      | ✅ OK  | Gestión de inventario, carrito de compras y reglas sin estado funcionando. |
+| Validaciones Regex                  | ✅ OK  | Intercepción en formulario y alerta en pantalla con datos no válidos.      |
 | Repositorio GitHub                  | ✅ OK  | Código local sincronizado con el repositorio remoto.                      |
-
 
 ## 👤 Autor
 
