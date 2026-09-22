@@ -23,6 +23,12 @@
                         </li>
                     </ul>
 
+                    <!-- WIDGET DE CLIMA (Consumo de Servicio Externo REST desde Front-End) -->
+                    <div id="clima-widget" class="d-flex align-items-center me-3 text-muted border rounded px-2 py-1 bg-light small">
+                        <span class="me-1">📍 Arequipa:</span>
+                        <strong id="clima-temp" class="text-primary">Cargando...</strong>
+                    </div>
+
                     <!-- BOTÓN DE CAMBIO DE IDIOMA (i18n) -->
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle btn-sm" type="button" id="dropdownIdioma" data-bs-toggle="dropdown" aria-expanded="false">
@@ -61,6 +67,30 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- SCRIPT FRONT-END: Consumo de Servicio Externo (API Open-Meteo) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // API gratuita de Open-Meteo para obtener temperatura de Arequipa
+            const urlApiClima = "https://api.open-meteo.com/v1/forecast?latitude=-16.409&longitude=-71.537&current=temperature_2m&timezone=auto";
+
+            fetch(urlApiClima)
+                .then(response => {
+                    if (!response.ok) throw new Error("Error en la respuesta de la API de clima");
+                    return response.json();
+                })
+                .then(data => {
+                    const temp = data.current.temperature_2m;
+                    const unidad = data.current_units.temperature_2m;
+                    document.getElementById("clima-temp").innerText = `${temp} ${unidad}`;
+                })
+                .catch(error => {
+                    console.error("Error al consumir el servicio externo de clima:", error);
+                    document.getElementById("clima-temp").innerText = "N/D";
+                });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
