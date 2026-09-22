@@ -284,7 +284,36 @@ Completar la validación de datos en formularios mediante Expresiones Regulares 
 **Commit y Sincronización Remota:**
 - Se realizó la confirmación de cambios (*commit*) y el envío (*push*) exitoso a la rama `main` del repositorio de GitHub: `Joshua150453/Tecnolog-as-de-Construcci-n-de-Software`.
 
-## 3. Estado Actual de la Aplicación
+
+# Integración de Servicio Externo (API REST Clima)
+ 
+## 1. Objetivo
+ 
+Incorporar el consumo de un servicio REST externo desde el Front-End de la aplicación utilizando JavaScript (`fetch`), permitiendo enriquecer la interfaz de usuario con información en tiempo real sin recargar la página.
+ 
+## 2. Modificaciones Realizadas
+ 
+### Vista General / Plantilla Base (`_Layout.cshtml`)
+ 
+**Elemento UI en Encabezado**
+Se agregó un widget (`<div id="clima-widget">`) en la barra de navegación superior (junto al selector de idioma) para desplegar la ubicación y la temperatura actual.
+ 
+**Script de Consumo Asíncrono (JavaScript)**
+Se implementó una función ejecutada en el evento `DOMContentLoaded` que invoca mediante `fetch` la API gratuita de Open-Meteo:
+ 
+```
+https://api.open-meteo.com/v1/forecast?latitude=-16.409&longitude=-71.537&current=temperature_2m&timezone=auto
+```
+ 
+**Manipulación Dinámica del DOM**
+Una vez obtenida la respuesta JSON del servidor remoto, los datos (`temperature_2m`) se insertan en el elemento HTML `<strong id="clima-temp">`. Se incluyó manejo de errores (`catch`) en caso de fallo de red.
+ 
+## 3. Resultado de la Verificación
+ 
+- **Interfaz de Usuario:** Se confirmó mediante la UI que la aplicación consulta la API y muestra la lectura de temperatura correspondiente a Arequipa (ej. 📍 Arequipa: 14.8 °C).
+- **Sincronización de Código:** Los cambios fueron consolidados y subidos a la rama `main` del repositorio GitHub (`Joshua150453/Tecnolog-as-de-Construcci-n-de-Software`).
+- 
+## 4. Estado Actual de la Aplicación
 
 | Componente / Característica       | Estado | Observaciones                                                              |
 |------------------------------------|:------:|-----------------------------------------------------------------------------|
