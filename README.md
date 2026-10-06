@@ -312,17 +312,176 @@ Una vez obtenida la respuesta JSON del servidor remoto, los datos (`temperature_
  
 - **Interfaz de Usuario:** Se confirmó mediante la UI que la aplicación consulta la API y muestra la lectura de temperatura correspondiente a Arequipa (ej. 📍 Arequipa: 14.8 °C).
 - **Sincronización de Código:** Los cambios fueron consolidados y subidos a la rama `main` del repositorio GitHub (`Joshua150453/Tecnolog-as-de-Construcci-n-de-Software`).
-- 
-## 4. Estado Actual de la Aplicación
 
-| Componente / Característica       | Estado | Observaciones                                                              |
-|------------------------------------|:------:|-----------------------------------------------------------------------------|
-| Compilación (.NET)                 | ✅ OK  | Ejecución limpia sin errores a través de `dotnet run`.                     |
-| Internacionalización (i18n)        | ✅ OK  | Alternancia fluida entre Español e Inglés mediante cookies de sesión.      |
-| Arquitectura N-Capas                | ✅ OK  | Entidades, DAL, BLL y Web operando de forma desacoplada.                   |
-| Funciones Stateful / Stateless      | ✅ OK  | Gestión de inventario, carrito de compras y reglas sin estado funcionando. |
-| Validaciones Regex                  | ✅ OK  | Intercepción en formulario y alerta en pantalla con datos no válidos.      |
-| Repositorio GitHub                  | ✅ OK  | Código local sincronizado con el repositorio remoto.                      |
+# Implementación de WebSockets (SignalR)
+
+## 1. Descripción General
+
+Se incorporó la tecnología **WebSockets** utilizando el marco de trabajo **ASP.NET Core SignalR** para dotar a la aplicación de capacidades de comunicación bidireccional en tiempo real entre el servidor y los clientes conectados.
+
+La característica implementada consiste en una **notificación en tiempo real a todos los usuarios activos** en la plataforma cada vez que un nuevo producto es registrado en el sistema.
+
+## 2. Arquitectura de la Solución (N-Capas)
+
+La integración se distribuyó a lo largo de la capa de presentación (`GestionProductos.Web`) respetando la separación de responsabilidades:
+
+```plaintext
+GestionProductos.Web/
+├── Hubs/
+│   └── ProductoHub.cs          <-- Canal WebSocket (SignalR)
+├── Controllers/
+│   └── ProductoController.cs   <-- Emisión del evento desde el servidor
+├── Views/
+│   └── Shared/
+│       └── _Layout.cshtml      <-- Cliente JavaScript (Escucha e interfaz)
+└── Program.cs                  <-- Configuración y mapeo del pipeline
+```
+
+## 3. Detalle de Componentes Implementados
+
+### Paso 1: Definición del Hub (`ProductoHub.cs`)
+
+El Hub es la clase central que gestiona la conexión WebSocket entre el servidor y los clientes conectados.
+
+- **Ruta de ubicación:** `GestionProductos.Web/Hubs/ProductoHub.cs`
+
+**Código:**
+
+```csharp
+using Microsoft.AspNetCore.SignalR;
+
+namespace GestionProductos.Web.Hubs
+{
+    public class ProductoHub : Hub
+    {
+        // Hub centralizado para la comunicación en tiempo real de productos
+    }
+}
+```
+
+### Paso 2: Registro y Mapeo en `Program.cs`
+
+Se registraron los servicios de SignalR en el contenedor de inyección de dependencias y se mapeó la ruta del WebSocket en el pipeline HTTP de la aplicación.
+
+- **Servicio inyectado:** `builder.Services.AddSignalR();`
+- **Ruta de WebSocket:** `app.MapHub<ProductoHub>("/productoHub");`
+
+### Paso 3: Inyección y Emisión desde el Controlador (`ProductoController.cs`)
+
+Se inyectó la interfaz `IHubContext<ProductoHub>` mediante el constructor del controlador. Al ejecutar exitosamente el método `Crear` (POST), el servidor notifica de forma asíncrona a todos los clientes mediante el evento `"RecibirNuevoProducto"`.
+
+**Constructor:**
+
+```csharp
+private readonly IHubContext<ProductoHub> _hubContext;
+
+public ProductoController(IConfiguration configuration, IHubContext<ProductoHub> hubContext)
+{
+    string connectionString = configuration.GetConnectionString("ConexionSQL");
+    _productoBLL = new ProductoBLL(connectionString);
+    _hubContext = hubContext;
+}
+```
+
+**Método Crear (POST):**
+
+```csharp
+[HttpPost]
+public async Task<IActionResult> Crear(Producto producto)
+{
+    if (!ModelState.IsValid)
+    {
+        return View(producto);
+    }
+
+    try
+    {
+        _productoBLL.Insertar(producto);
+
+        // Emisión de notificación WebSocket a todos los clientes conectados
+        await _hubContext.Clients.All.SendAsync("RecibirNuevoProducto", producto.Nombre);
+
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception ex)
+    {
+        ViewBag.Error = ex.Message;
+        return View(producto);
+    }
+}
+```
+
+### Paso 4: Cliente Front-End y Receptor (`_Layout.cshtml`)
+
+En la plantilla maestra de la interfaz se incluyó la librería cliente `@microsoft/signalr` desde CDN y la lógica JavaScript que establece la conexión persistente con el servidor y renderiza la alerta flotante.
+
+**Librería cliente:**
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+```
+
+**Script de conexión y escucha:**
+
+```javascript
+// 1. Instanciar la conexión WebSocket hacia la ruta registrada en Program.cs
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/productoHub")
+    .withAutomaticReconnect()
+    .build();
+
+// 2. Escuchar el evento enviado por el servidor
+connection.on("RecibirNuevoProducto", function (nombreProducto) {
+    const mensaje = `📢 ¡Nuevo producto registrado en tiempo real: "${nombreProducto}"!`;
+    
+    // Generación dinámica del elemento Toast / Alerta flotante
+    const alertaDiv = document.createElement("div");
+    alertaDiv.className = "alert alert-success alert-dismissible fade show position-fixed bottom-0 end-0 m-3 z-3";
+    alertaDiv.style.zIndex = "9999";
+    alertaDiv.innerHTML = `
+        <strong>Notificación WebSocket:</strong> ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(alertaDiv);
+});
+
+// 3. Iniciar la conexión de red
+connection.start()
+    .then(() => console.log("Conectado exitosamente al WebSocket de Productos."))
+    .catch(err => console.error("Error al conectar con WebSocket:", err));
+```
+
+## 4. Flujo de Funcionamiento
+
+```plaintext
+[ Cliente A (Navegador) ]         [ Servidor ASP.NET Core ]         [ Cliente B (Navegador) ]
+            │                                 │                                 │
+            │  --- GET /productoHub --------> │  (Establece conexión WebSocket) │
+            │                                 │ <--- GET /productoHub --------- │
+            │                                 │                                 │
+   1. Crea un Producto                        │                                 │
+   ─── POST /Producto/Crear ────────────────> │                                 │
+                                              │                                 │
+                                    2. Inserta en BD                            │
+                                    3. Ejecuta SignalR                          │
+                                       _hubContext.Clients.All.SendAsync(...)   │
+                                              │                                 │
+            │ <── WebSocket: RecibirNuevo ─── │ ─── WebSocket: RecibirNuevo ──> │
+            │                                 │                                 │
+   4. Muestra Alerta Toast                    │                        4. Muestra Alerta Toast
+```
+
+## 5. Estado de Verificación
+
+| Componente / Característica    | Estado | Observaciones                                                              |
+|--------------------------------|:------:|----------------------------------------------------------------------------|
+| Compilación (.NET)             |  ✅ OK  | Ejecución limpia sin errores a través de `dotnet run`.                     |
+| Internacionalización (i18n)    |  ✅ OK  | Alternancia fluida entre Español e Inglés mediante cookies de sesión.      |
+| Arquitectura N-Capas           |  ✅ OK  | Entidades, DAL, BLL y Web operando de forma desacoplada.                   |
+| Funciones Stateful / Stateless |  ✅ OK  | Gestión de inventario, carrito de compras y reglas sin estado funcionando. |
+| Validaciones Regex             |  ✅ OK  | Intercepción en formulario y alerta en pantalla con datos no válidos.      |
+| WebSockets (SignalR)           |  ✅ OK  | Notificación en tiempo real a todos los clientes al registrar un producto. |
+| Repositorio GitHub             |  ✅ OK  | Código local sincronizado con el repositorio remoto.                       |
 
 ## 👤 Autor
 
