@@ -7,6 +7,37 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
+<!-- Librería Cliente de SignalR desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+    // Configurar la conexión al WebSocket (SignalR)
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/productoHub")
+        .withAutomaticReconnect()
+        .build();
+
+    // Escuchar el evento enviado desde el servidor
+    connection.on("RecibirNuevoProducto", function (nombreProducto) {
+        // Crear alerta dinámica en pantalla
+        const mensaje = `📢 ¡Nuevo producto registrado en tiempo real: "${nombreProducto}"!`;
+        
+        // Mostrar alerta de Bootstrap
+        const alertaDiv = document.createElement("div");
+        alertaDiv.className = "alert alert-success alert-dismissible fade show position-fixed bottom-0 end-0 m-3 z-3";
+        alertaDiv.style.zIndex = "9999";
+        alertaDiv.innerHTML = `
+            <strong>Notificación WebSocket:</strong> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(alertaDiv);
+    });
+
+    // Iniciar la conexión WebSocket
+    connection.start()
+        .then(() => console.log("Conectado exitosamente al WebSocket de Productos."))
+        .catch(err => console.error("Error al conectar con WebSocket:", err));
+</script>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">

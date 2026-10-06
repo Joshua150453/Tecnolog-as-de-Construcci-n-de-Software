@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.SignalR; // 🔹 Necesario para IHubContext
 using GestionProductos.BLL;
 using GestionProductos.Entidades;
+using GestionProductos.Web.Hubs; // 🔹 Importante para ProductoHub
 using System.Text.Json;
 
 namespace GestionProductos.Web.Controllers
@@ -10,11 +12,13 @@ namespace GestionProductos.Web.Controllers
     public class ProductoController : Controller
     {
         private readonly ProductoBLL _productoBLL;
+        private readonly IHubContext<ProductoHub> _hubContext; // 🔹 Atributo SignalR
 
-        public ProductoController(IConfiguration configuration)
+        public ProductoController(IConfiguration configuration, IHubContext<ProductoHub> hubContext)
         {
             string connectionString = configuration.GetConnectionString("ConexionSQL");
             _productoBLL = new ProductoBLL(connectionString);
+            _hubContext = hubContext; // 🔹 Inyección de dependencia
         }
 
         // GET: /Producto/
@@ -32,7 +36,7 @@ namespace GestionProductos.Web.Controllers
 
         // POST: /Producto/Crear
         [HttpPost]
-        public IActionResult Crear(Producto producto)
+        public async Task<IActionResult> Crear(Producto producto)
         {
             // 🔹 Evalúa las validaciones del modelo ([RegularExpression], [Required], etc.)
             if (!ModelState.IsValid)
@@ -43,6 +47,10 @@ namespace GestionProductos.Web.Controllers
             try
             {
                 _productoBLL.Insertar(producto);
+
+                // 🔹 EMISIÓN DE NOTIFICACIÓN VÍA WEBSOCKET (SignalR) EN TIEMPO REAL
+                await _hubContext.Clients.All.SendAsync("RecibirNuevoProducto", producto.Nombre);
+
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
